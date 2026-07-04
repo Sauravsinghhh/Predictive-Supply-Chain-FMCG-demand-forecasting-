@@ -43,6 +43,9 @@ models/*.joblib
 models/*.pt
 models/*.bin
 
+# Archive
+data/archive/
+
 # Keep the directory structure but ignore contents
 !data/raw/
 !data/processed/
