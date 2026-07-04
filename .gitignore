@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Environments and packaging
+.env
+.venv
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# Data and Model artifacts (Ignore large CSV, Parquet, and model binaries)
+data/raw/*.csv
+data/raw/*.zip
+data/processed/*.csv
+data/processed/*.parquet
+models/*.pkl
+models/*.joblib
+models/*.pt
+models/*.bin
+
+# Keep the directory structure but ignore contents
+!data/raw/
+!data/processed/
+!models/
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/.gitkeep

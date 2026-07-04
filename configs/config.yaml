@@ -1,0 +1,82 @@
+# FreshMind Project Configuration
+
+# Project Paths (Relative to repository root)
+paths:
+  data_raw_dir: "data/raw"
+  data_processed_dir: "data/processed"
+  reports_dir: "reports"
+  models_dir: "models"
+  logs_dir: "logs"
+  log_file: "logs/app.log"
+
+# Ingestion Settings
+ingestion:
+  download_url: "https://github.com/Nixtla/m5-forecasts/raw/main/datasets/m5.zip"
+  zip_name: "m5.zip"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Data Schemas and Validations
+schemas:
+  calendar:
+    columns:
+      - date
+      - wm_yr_wk
+      - weekday
+      - wday
+      - month
+      - year
+      - d
+      - event_name_1
+      - event_type_1
+      - event_name_2
+      - event_type_2
+      - snap_CA
+      - snap_TX
+      - snap_WI
+    dtypes:
+      date: "object"
+      wm_yr_wk: "int64"
+      weekday: "object"
+      wday: "int64"
+      month: "int64"
+      year: "int64"
+      d: "object"
+      event_name_1: "object"
+      event_type_1: "object"
+      event_name_2: "object"
+      event_type_2: "object"
+      snap_CA: "int64"
+      snap_TX: "int64"
+      snap_WI: "int64"
+  
+  sell_prices:
+    columns:
+      - store_id
+      - item_id
+      - wm_yr_wk
+      - sell_price
+    dtypes:
+      store_id: "object"
+      item_id: "object"
+      wm_yr_wk: "int64"
+      sell_price: "float64"
+
+  sales_train_validation:
+    required_columns:
+      - id
+      - item_id
+      - dept_id
+      - cat_id
+      - store_id
+      - state_id
+    dtypes:
+      id: "object"
+      item_id: "object"
+      dept_id: "object"
+      cat_id: "object"
+      store_id: "object"
+      state_id: "object"
