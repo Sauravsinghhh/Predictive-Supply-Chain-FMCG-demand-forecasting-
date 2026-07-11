@@ -88,6 +88,18 @@ class DataLoader:
         df = pd.read_csv(filepath)
         return self.optimize_memory(df)
 
+    def load_raw_dataframes(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Loads and returns the three primary dataframes: calendar, sell_prices, sales.
+        
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: (calendar_df, prices_df, sales_df)
+        """
+        calendar_df = self.load_dataset("calendar.csv")
+        prices_df = self.load_dataset("sell_prices.csv")
+        sales_df = self.load_dataset("sales_train_validation.csv")
+        return calendar_df, prices_df, sales_df
+
     def run_validation_checks(self) -> Dict[str, Any]:
         """
         Runs complete shape, schema, duplicate, and null value validations on M5 datasets.
