@@ -1,30 +1,30 @@
-# System Architecture - FreshMind
+# System Architecture - FreshMind (Week 2 Actual)
 
-This document details the System Architecture (C4 Level 1 Context Diagram equivalent) for the **FreshMind: FMCG Predictive Supply Chain Demand Forecasting & Replenishment** system.
+This document details the actual system architecture implemented for the **FreshMind: FMCG Predictive Supply Chain Demand Forecasting & Replenishment** system as of Week 2.
 
-## C4 Level 1 Context Diagram
+## Implemented Architecture Diagram
 
 ```mermaid
 graph TD
-    User["User (Store Managers / Inventory Planners)"]
-    Dashboard["Dashboard (Streamlit Frontend)"]
-    API["Forecast API (FastAPI Backend)"]
-    Engine["Forecast Engine (ML Modeling)"]
-    FeatEng["Feature Engineering Pipeline"]
-    DataPipe["Data Pipeline (Ingestion & ETL)"]
-    RawData["Raw Dataset (Walmart M5)"]
-    ModelStore["Model Storage (Serialized Binaries / MLflow)"]
-    InvEngine["Inventory Recommendation Engine"]
+    User["User (Store Managers / Planners)"]
+    UI["Streamlit UI (dashboard/app.py)"]
+    DataPrep["Data Processing (src/features/build_features.py)"]
+    DataLoader["DataLoader (src/data/data_loader.py)"]
+    Dataset["Dataset (data/raw/)"]
+    Forecast["Baseline Forecast Module (src/models/baseline_forecast.py)"]
+    Replenish["Replenishment Module (src/inventory/replenishment.py)"]
+    Output["Output (Forecast Visuals & Recommendations)"]
 
-    User -->|Views forecasts & recommendations| Dashboard
-    Dashboard -->|Requests predictions| API
-    API -->|Triggers inference| Engine
-    API -->|Queries replenishment| InvEngine
-    Engine -->|Reads pre-engineered features| FeatEng
-    Engine -->|Loads trained weights| ModelStore
-    FeatEng -->|Extracts processed historical sales| DataPipe
-    DataPipe -->|Cleans & structures| RawData
-    InvEngine -->|Calculates safety stock & orders| API
+    User -->|Selects Store, SKU & inputs metrics| UI
+    UI -->|Loads data using| DataLoader
+    DataLoader -->|Reads raw CSVs| Dataset
+    UI -->|Triggers feature prep| DataPrep
+    DataPrep -->|Prepares single series| UI
+    UI -->|Requests forecast| Forecast
+    UI -->|Requests replenishment| Replenish
+    Forecast -->|Returns predictions| UI
+    Replenish -->|Returns recommended order qty| UI
+    UI -->|Displays results| Output
 ```
 
 ---
@@ -32,39 +32,35 @@ graph TD
 ## Component Details
 
 ### 1. User
-*   **Role:** Store managers, inventory controllers, and supply chain analysts.
-*   **Action:** Interacts with the Dashboard to inspect daily demand forecasts, examine stockout risk heatmaps, and download recommended replenishment purchase orders.
+* **Role:** Store managers, inventory planners, and supply chain analysts.
+* **Function:** Selects store/SKU filter options, chooses forecasting model, and adjusts inventory decision metrics (current inventory and safety buffer) in the Streamlit UI.
 
-### 2. Dashboard
-*   **Technology:** Streamlit / Python.
-*   **Function:** Responsive web application displaying:
-    *   Forecast vs. Actual sales plots.
-    *   Stockout Risk Heatmaps (highlighting high-probability shelf-empty events).
-    *   Replenishment schedules with suggested order quantities.
+### 2. Streamlit UI (`dashboard/app.py`)
+* **Technology:** Streamlit.
+* **Function:** Coordinates execution flow, renders user input widgets, pulls data via the DataLoader, calls features preparation, triggers forecast/replenishment runs, and handles output rendering.
 
-### 3. Forecast API
-*   **Technology:** FastAPI / REST interface.
-*   **Function:** Serves predictions and recommendations to downstream systems. Acts as the orchestrator between the user frontend, the modeling engine, and the inventory logic.
+### 3. Data Processing (`src/features/build_features.py`)
+* **Technology:** Pandas / NumPy.
+* **Function:** Prepares time-series data for a single store-SKU combination by melting wide sales records into a long format, merging calendar metadata (dates, weekdays, months), and calculating rolling indicators (rolling mean and standard deviation).
 
-### 4. Forecast Engine
-*   **Technology:** LightGBM, Prophet, PyTorch (TFT, N-BEATS).
-*   **Function:** Generates multi-horizon point and probabilistic demand predictions at the Store-SKU-Day level.
+### 4. DataLoader (`src/data/data_loader.py`)
+* **Technology:** Pandas.
+* **Function:** Configured by `configs/config.yaml`, handles ingestion loading and downcasting logic for M5 calendar, prices, and sales validation. Extended to expose clean DataFrame loading.
 
-### 5. Feature Engineering
-*   **Technology:** Pandas / NumPy / Scikit-learn.
-*   **Function:** Computes lags, rolling window statistics, Fourier features for seasonality, and merges calendar metadata (holidays, SNAP promotions, events).
+### 5. Dataset (`data/raw/`)
+* **Description:** Schema-compliant CSV tables (calendar, sell_prices, sales_train_validation) representing walmart sales history, calendar dates, and item pricing.
 
-### 6. Data Pipeline
-*   **Technology:** Pandas / PySpark (local execution).
-*   **Function:** Validates schemas, enforces data constraints (non-negative sales, matching calendar dates), resolves duplicates, and handles missing price/promotion records.
+### 6. Baseline Forecast Module (`src/models/baseline_forecast.py`)
+* **Technology:** NumPy / Object-Oriented python forecasters.
+* **Function:** Fits historical target sales arrays and outputs point predictions for a given horizon. Supports:
+  * **Naive Forecast:** Propagates last historical value.
+  * **Seasonal Naive:** Propagates weekly seasonality (7-day lag).
+  * **Simple Moving Average:** Evaluates and propagates the mean of a rolling window.
 
-### 7. Dataset (Walmart M5 Raw)
-*   **Description:** Contains historical weekly sales, prices, calendar promotions (SNAP benefits), and event schedules across 10 stores and 3 states (CA, TX, WI) for 3,049 items.
+### 7. Replenishment Module (`src/inventory/replenishment.py`)
+* **Technology:** Basic inventory algebra.
+* **Function:** Computes recommended immediate order sizes using the formula:
+  $$\text{Recommended Order} = \max(0, \text{Forecast Demand} - \text{Current Inventory} + \text{Safety Buffer})$$
 
-### 8. Model Storage
-*   **Technology:** Local filesystem (with DVC tracking) or MLflow Model Registry.
-*   **Function:** Version-controls trained models, parameters, and structural weights, ensuring reproducible deployments.
-
-### 9. Inventory Recommendation Engine
-*   **Technology:** SciPy / Python custom logic.
-*   **Function:** Applies an **Order-Up-To (s, S) Policy** and calculates **Safety Stock** based on demand distribution (probabilistic forecasts), target service level (e.g. 95%), and lead times.
+### 8. Output
+* **Function:** Displays the visual results to the User. Includes interactive Plotly lines charting historical trends alongside predictions, metric cards summarizing replenishment orders, and reactive under-stock warning banners.
