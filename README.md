@@ -4,7 +4,7 @@ An AI-powered, production-grade demand forecasting and inventory replenishment s
 
 ---
 
-## Business Scenario & Problem Statement
+## 🏬 Business Scenario & Problem Statement
 
 **Business Context:**
 FreshKart is a fictional 500-store FMCG retail chain. The current replenishment strategy relies on a simple **90-day Moving Average**, which is unresponsive to seasonality, promotional schedules, weather patterns, and holidays.
@@ -21,7 +21,7 @@ Develop a scalable machine learning and decision-science pipeline to:
 
 ---
 
-## Technical Stack & Rationale
+## 🛠️ Technical Stack & Rationale
 
 | Component | Technology | Rationale |
 | :--- | :--- | :--- |
@@ -33,14 +33,13 @@ Develop a scalable machine learning and decision-science pipeline to:
 | **Data Validation** | Pydantic | Enforces strict schema validations and type constraints at execution runtime. |
 | **Testing** | Pytest | Scalable unit-testing framework for verifying data ingestion and loader components. |
 | **Containerization** | Docker | Packages application dependencies and code into a single, deployable image. |
-| **Version Control** | Git & GitHub | Code versioning, collaboration, and structured merge workflows. |
-| **MLOps & Tracking** | MLflow & DVC | Tracks model experiments, hyperparameter logs, and stores dataset versions. |
+| **CI/CD** | GitHub Actions | Automatically installs dependencies, runs tests, and validates builds on push/PR. |
+| **Logging & Auditing** | Python Logging | Centralized configuration for persistent file logging and container stdout logs. |
 | **User Interface** | Streamlit | Rapid prototyping of clean, interactive business dashboards. |
-| **Development** | VS Code & Jupyter | Professional IDE and interactive notebooks for exploratory data analysis (EDA). |
 
 ---
 
-## System Architecture
+## 🏗️ System Architecture
 
 The following block outlines the system boundaries and component linkages:
 
@@ -48,33 +47,38 @@ The following block outlines the system boundaries and component linkages:
 graph TD
     User["User (Store Managers / Planners)"]
     Dashboard["Dashboard (Streamlit UI)"]
-    API["Forecast API (FastAPI Backend)"]
     Engine["Forecast Engine (LightGBM/TFT)"]
     FeatEng["Feature Engineering (Lags, Seasonality)"]
     DataPipe["Data Pipeline (ETL & Validation)"]
     RawData["Dataset (M5 raw files)"]
     ModelStore["Model Storage (MLflow/DVC)"]
     InvEngine["Inventory Recommendation Engine"]
+    Logger["Central Logging & Custom Exceptions"]
 
     User -->|Views forecasts & recommendations| Dashboard
-    Dashboard -->|Queries API| API
-    API -->|Triggers inference| Engine
-    API -->|Triggers inventory policy| InvEngine
+    Dashboard -->|Triggers pipeline & updates UI| Engine
+    Dashboard -->|Triggers inventory policy| InvEngine
     Engine -->|Loads trained weights| ModelStore
     Engine -->|Reads engineered features| FeatEng
     FeatEng -->|Combines historical series| DataPipe
     DataPipe -->|Loads & cleans| RawData
-    InvEngine -->|Calculates Safety Stock & Orders| API
+    InvEngine -->|Calculates Safety Stock & Orders| Dashboard
+    DataPipe -.->|Logs events & raises exceptions| Logger
+    FeatEng -.->|Logs events & raises exceptions| Logger
 ```
 
-*For detailed component descriptions, see [docs/architecture.md](file:///c:/Users/Saurav/Desktop/Predictive%20Supply%20Chain/docs/architecture.md).*
+*For detailed architectural explanations, see [docs/architecture.md](file:///c:/Users/Saurav/Desktop/Predictive%20Supply%20Chain/docs/architecture.md).*
 
 ---
 
-## Folder Structure
+## 📂 Folder Structure
 
 ```text
 FreshMind/
+│
+├── .github/
+│   └── workflows/          # GitHub Actions Continuous Integration pipeline scripts
+│       └── ci.yml
 │
 ├── data/
 │   ├── raw/                # Original, immutable data files (calendar, prices, sales)
@@ -86,103 +90,135 @@ FreshMind/
 ├── src/                    # Core modular production source code
 │   ├── __init__.py
 │   ├── data/               # Ingestion, schema validation, and loading modules
-│   ├── features/           # Feature engineering logic (future step)
-│   ├── models/             # Forecasting model training and inference (future step)
-│   ├── inventory/          # Safety stock and order recommendation logic (future step)
-│   └── utils/              # Logging, configuration loader, and helper utilities
+│   ├── features/           # Feature engineering logic (lags, rolling stats)
+│   ├── models/             # Forecasting model training and inference
+│   ├── inventory/          # Safety stock and order recommendation logic
+│   └── utils/              # Custom exceptions, logging configurations, and helpers
 │
-├── configs/                # Externalized YAML configuration parameters
+├── configs/                # Central YAML settings and logging configurations
+│   ├── config.yaml
+│   └── logging_config.py
 │
-├── docs/                   # System design, architecture diagrams, and docs
+├── docs/                   # System design, Architecture Decision Records (ADRs), and demo scripts
+│   ├── adr/
+│   │   ├── ADR-001-baseline-and-streamlit.md
+│   │   ├── ADR-002-testing-strategy.md
+│   │   └── ADR-003-logging-and-error-handling.md
+│   ├── demo_script_week_2.md
+│   └── demo_script_week_3.md
 │
-├── reports/                # Generated data summaries, performance metrics, plots
+├── reports/                # Generated data summaries, performance metrics, and technical articles
+│   ├── data_status_report.md
+│   ├── technical_blog_01.md
+│   └── status_report_week_3.md
 │
-├── dashboard/              # Streamlit frontend files
+├── dashboard/              # Streamlit frontend files (app.py)
 │
 ├── models/                 # Saved model binaries, weights, and parameters
 │
-├── tests/                  # Pytest unit tests for pipeline components
+├── tests/                  # Pytest unit and integration test suite files
 │
-├── scripts/                # Utility shell and python scripts (e.g. data download)
-│
-├── assets/                 # Static images, UI screenshots, and diagrams
+├── scripts/                # Utility execution scripts (e.g. data downloader/generator)
 │
 ├── requirements.txt        # Production dependency pins
 │
-├── .gitignore              # Standard git exclusion rules
+├── .gitignore              # Git exclusion rules
 │
 └── README.md               # Master documentation (this file)
 ```
 
 ---
 
-## Ingesting the M5 Dataset
+## 🚀 15-Minute Setup & Quick-Start Guide
 
-The M5 Forecasting dataset consists of the following key files:
-1.  `calendar.csv`: Holiday markers, weekday mappings, and SNAP promotional benefit schedules.
-2.  `sell_prices.csv`: Weekly pricing logs per store-item combination.
-3.  `sales_train_validation.csv`: Daily historical unit sales for 3,049 items across 10 stores.
-4.  `sample_submission.csv`: File schema representing the prediction targets.
+Get the project running locally and see output in under 15 minutes by following these steps.
 
-### Installation & Execution Guide
+### 1. Prerequisites
+Ensure you have the following installed on your machine:
+*   Python 3.12 or higher
+*   Git
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/Sauravsinghhh/Predictive-Supply-Chain-FMCG-demand-forecasting-.git
-    cd Predictive-Supply-Chain-FMCG-demand-forecasting-
-    ```
+### 2. Clone the Repository
+Open your terminal and run:
+```bash
+git clone https://github.com/Sauravsinghhh/Predictive-Supply-Chain-FMCG-demand-forecasting-.git
+cd Predictive-Supply-Chain-FMCG-demand-forecasting-
+```
 
-2.  **Create and Activate Virtual Environment:**
-    ```bash
-    python -m venv .venv
-    # Windows:
-    .venv\Scripts\activate
-    # macOS/Linux:
-    source .venv/bin/activate
-    ```
+### 3. Create a Virtual Environment & Install Dependencies
+Create and activate an isolated environment, then install requirements:
+```bash
+# Create virtual environment
+python -m venv .venv
 
-3.  **Install Dependencies:**
-    ```bash
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    ```
+# Activate virtual environment
+# On Windows (Command Prompt):
+.venv\Scripts\activate.bat
+# On Windows (PowerShell):
+.venv\Scripts\activate.ps1
+# On macOS/Linux:
+source .venv/bin/activate
 
-4.  **Acquire Dataset (Choose Mode):**
-    *   **Developer Sandbox (Recommended for quick test):** Generates fully schema-compliant, lightweight synthetic files so the pipeline runs instantly without a 300MB download.
-        ```bash
-        python scripts/download_data.py --sample
-        ```
-    *   **Production/Full Dataset:** Downloads the full zip file, decompresses M5 CSVs, and places them into the correct directory.
-        ```bash
-        python scripts/download_data.py
-        ```
+# Install dependencies
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-5.  **Run Ingestion & Validation Pipeline:**
-    ```bash
-    python src/data/data_loader.py
-    ```
+### 4. Set Up the Test Sandbox Dataset (2 Seconds)
+To run the project locally or run tests immediately without downloading the full 300MB dataset, generate a schema-compliant, lightweight synthetic sandbox dataset:
+```bash
+python scripts/download_data.py --sample
+```
+*(To download the full, actual M5 Forecasting dataset, omit the `--sample` flag: `python scripts/download_data.py`)*
 
-6.  **Run Unit Test Suite:**
-    ```bash
-    pytest tests/
-    ```
+### 5. Run Ingestion & Data Validation
+Execute the ingestion script to clean the data, apply memory downcasting optimizations, validate schemas, and generate an ingestion report:
+```bash
+python src/data/data_loader.py
+```
+*Review the validation report generated at [reports/data_status_report.md](file:///c:/Users/Saurav/Desktop/Predictive%20Supply%20Chain/reports/data_status_report.md) and logs recorded in `logs/app.log`.*
+
+### 6. Run the Test Suite
+Run all unit and integration tests using pytest:
+```bash
+python -m pytest
+```
+
+### 7. Run the Streamlit Dashboard UI
+Launch the interactive web application:
+```bash
+streamlit run dashboard/app.py
+```
+Your browser will automatically open to `http://localhost:8501`. Here you can select stores/SKUs, select forecasting horizons, adjust inventory buffers, view replenishment orders, and inspect interactive charts!
 
 ---
 
-## Future Project Roadmap
+## 🛡️ Software Hardening & Quality Control
 
-*   **Week 1 (Current):** Project skeleton, configuration, dataset downloader, validation scripts, C4 architecture, and unit testing.
-*   **Week 2:** Exploratory Data Analysis (EDA) and Baseline Forecasting Models (Naive, SNaive, ETS).
-*   **Week 3:** Machine Learning Models (LightGBM, Prophet) and comprehensive Feature Engineering.
-*   **Week 4:** Deep Learning Models (TFT, N-BEATS, PatchTST) on PyTorch.
-*   **Week 5:** Hierarchical Forecasting, Bottom-Up reconciliation, and MinT optimization.
-*   **Week 6:** Inventory Optimization (Safety stock calculation, Order-Up-To execution) and Streamlit dashboard.
+FreshMind is built with professional engineering standards:
+*   **Centralized Logging:** Centralized logging in `configs/logging_config.py` captures events, optimization metrics, and execution steps, writing simultaneously to standard output and `logs/app.log`.
+*   **Custom Exceptions:** Specific exception definitions in `src/utils/errors.py` (e.g. `MissingDatasetError`, `InvalidSKUError`) eliminate silent failures and allow callers to gracefully intercept and present error dialogs.
+*   **Test Coverage:** Pytest suite covers memory downcasting, feature transformations, baseline forecasting models, utility classes, and end-to-end integration flows.
+*   **GitHub Actions CI:** Every pull request and push to the main branch triggers automated linting, environment builds, and test runs to guarantee main remains stable and deployable.
 
 ---
 
-## Project Metadata
+## 🔍 Troubleshooting
 
-*   **Author:** Saurav Singh
-*   **Segment:** Supply Chain ML & Operations Research
-*   **Target Roles:** Machine Learning Engineer, MLOps Engineer, Data Engineer
-*   **License:** MIT License
+*   **Error:** `MissingDatasetError` or `Required file ... not found`
+    *   *Solution:* Run the sample generator script to populate data files: `python scripts/download_data.py --sample`
+*   **Error:** `InvalidSKUError` or `SKU ID ... not found`
+    *   *Solution:* Make sure the SKU you select in the dashboard or features module exists in the sales dataset. On synthetic data, items are named `HOBBIES_1_001` through `HOBBIES_1_050`.
+*   **Error:** `pytest` command not recognized.
+    *   *Solution:* Ensure you have activated your virtual environment (`.venv\Scripts\activate`) where dependencies were installed, or execute using `python -m pytest`.
+
+---
+
+## 🗺️ Project Roadmap
+
+*   **Week 1:** Project skeleton, data loader, validations, C4 architecture, and basic unit testing.
+*   **Week 2:** Skinny MVP Pipeline, simple features, baseline forecasts, replenishment formulas, and Streamlit dashboard.
+*   **Week 3 (Current):** Project hardening, specific error handling, centralized logging configurations, new feature/utility unit tests, pipeline integration test, and GitHub Actions CI.
+*   **Week 4:** Feature engineering expansion (seasonality, holiday indicators, SNAP benefits, prices) and first Machine Learning model (LightGBM).
+*   **Week 5:** Deep Learning Forecasting Models (Temporal Fusion Transformers, N-BEATS) using PyTorch.
+*   **Week 6:** Hierarchical reconciliation (bottom-up and MinT), safety stock inventory policy expansion, and dashboard finalization.
