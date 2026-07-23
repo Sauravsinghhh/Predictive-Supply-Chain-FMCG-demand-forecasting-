@@ -158,6 +158,9 @@ current_on_hand = st.sidebar.number_input("📥 Current On-Hand Stock (Units)", 
 current_on_order = st.sidebar.number_input("🚚 Current On-Order Stock (Units)", min_value=0.0, value=5.0, step=1.0)
 lead_time = st.sidebar.slider("⏱️ Lead Time (Days)", min_value=1, max_value=7, value=3)
 service_level = st.sidebar.slider("🛡️ Service Level Target", min_value=0.80, max_value=0.99, value=0.95, step=0.01)
+unit_holding_cost = st.sidebar.number_input("💵 Unit Holding Cost (₹/unit/day)", min_value=0.01, value=0.1, step=0.01)
+unit_stockout_cost = st.sidebar.number_input("💸 Unit Stockout Cost (₹/unit/day)", min_value=0.1, value=1.5, step=0.1)
+
 
 # Tab layouts
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -259,7 +262,9 @@ inv_metrics = calculate_inventory_policies(
     current_on_hand=current_on_hand,
     current_on_order=current_on_order,
     lead_time_days=lead_time,
-    service_level=service_level
+    service_level=service_level,
+    unit_holding_cost=unit_holding_cost,
+    unit_stockout_cost=unit_stockout_cost
 )
 
 # ----------------- TAB 1: EXECUTIVE DASHBOARD -----------------
